@@ -1,5 +1,7 @@
 # Machine Learning for Physicists
 
+[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/goerz/MLforPhysicists/master)
+
 This is a repository for homework assignments for the course "Machine Learning
 for Physicists"
 
