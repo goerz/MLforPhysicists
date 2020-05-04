@@ -44,9 +44,9 @@ def apply_net(y_in, weights, biases, activations):
 def plot_connection_line(ax, X, Y, W, vmax=1.0, linewidth=3):
     t = np.linspace(0, 1, 20)
     if W > 0:
-        col = [0, 0.4, 0.8]
-    else:
         col = [1, 0.3, 0]
+    else:
+        col = [0, 0.4, 0.8]
     ax.plot(
         X[0] + (3 * t ** 2 - 2 * t ** 3) * (X[1] - X[0]),
         Y[0] + t * (Y[1] - Y[0]),
@@ -58,9 +58,9 @@ def plot_connection_line(ax, X, Y, W, vmax=1.0, linewidth=3):
 
 def plot_neuron_alpha(ax, X, Y, B, size=100.0, vmax=1.0):
     if B > 0:
-        col = [0, 0.4, 0.8]
-    else:
         col = [1, 0.3, 0]
+    else:
+        col = [0, 0.4, 0.8]
     ax.scatter(
         [X],
         [Y],
@@ -74,36 +74,35 @@ def plot_neuron_alpha(ax, X, Y, B, size=100.0, vmax=1.0):
 
 def plot_neuron(ax, X, Y, B, size=100.0, vmax=1.0):
     if B > 0:
-        col = [0, 0.4, 0.8]
-    else:
         col = [1, 0.3, 0]
+    else:
+        col = [0, 0.4, 0.8]
     ax.scatter([X], [Y], marker='o', c=np.atleast_2d(col), s=size, zorder=10)
 
 
-def render_network(
-    ax, weights, swapped_weights, biases, size=400, linewidth=5.0
-):
+def render_network(ax, weights, biases, size=400, linewidth=5.0):
 
     # positions of neurons on plot:
     posX = [[-0.5, +0.5]]
     posY = [[0, 0]]
     vmax = 0.0  # for finding the maximum weight
     vmaxB = 0.0  # for maximum bias
-    for j in range(len(biases)):
-        n_neurons = len(biases[j])
+    n_layers = len(biases)
+    for j in range(n_layers):
+        n_neurons = weights[j].shape[0]
         posX.append(np.array(range(n_neurons)) - 0.5 * (n_neurons - 1))
         posY.append(np.full(n_neurons, j + 1))
         vmax = np.maximum(vmax, np.max(np.abs(weights[j])))
         vmaxB = np.maximum(vmaxB, np.max(np.abs(biases[j])))
     # plot connections
-    for j in range(len(biases)):
+    for j in range(n_layers):
         for k in range(len(posX[j])):
             for m in range(len(posX[j + 1])):
                 plot_connection_line(
                     ax,
                     [posX[j][k], posX[j + 1][m]],
                     [posY[j][k], posY[j + 1][m]],
-                    swapped_weights[j][k, m],
+                    weights[j][m, k],
                     vmax=vmax,
                     linewidth=linewidth,
                 )
@@ -111,7 +110,7 @@ def render_network(
     # plot neurons
     for k in range(len(posX[0])):  # input neurons (have no bias!)
         plot_neuron(ax, posX[0][k], posY[0][k], vmaxB, vmax=vmaxB, size=size)
-    for j in range(len(biases)):  # all other neurons
+    for j in range(n_layers):  # all other neurons
         for k in range(len(posX[j + 1])):
             plot_neuron(
                 ax,
@@ -126,15 +125,16 @@ def render_network(
 
 
 def render_21_output(
-    ax, fig, y_out, M=100, y0range=[-1, 1], y1range=[-1, 1],
+    ax, fig, y_out, M=100, y0range=[-1, 1], y1range=[-1, 1], cmap=None,
 ):
     img = ax.imshow(
         np.reshape(y_out, [M, M]),
         origin='lower',
         extent=[y0range[0], y0range[1], y1range[0], y1range[1]],
+        cmap=cmap,
     )
-    ax.set_xlabel(r'$y_0$')
-    ax.set_ylabel(r'$y_1$')
+    ax.set_xlabel(r'$y_1$')
+    ax.set_ylabel(r'$y_2$')
     axins1 = inset_axes(
         ax,
         width="40%",  # width = 50% of parent_bbox width
@@ -177,8 +177,8 @@ def visualize_network(
     (note: internally, m and k are swapped, see the explanation of
     batch processing in lecture 2)
 
-    biases[j] is the vector of bias values for obtaining the neurons in layer j+1
-    biases[j][k] is the bias for neuron k in layer j+1
+    biases[j] is the vector of bias values for obtaining the neurons in layer
+    j+1 biases[j][k] is the bias for neuron k in layer j+1
 
     activations is a list of the activation functions for
     the different layers: choose 'linear','sigmoid',
@@ -205,9 +205,7 @@ def visualize_network(
     fig, ax = plt.subplots(ncols=2, nrows=1, figsize=(8, 4))
 
     # plot the network itself:
-    render_network(
-        ax[0], weights, swapped_weights, biases, size=size, linewidth=linewidth
-    )
+    render_network(ax[0], weights, biases, size=size, linewidth=linewidth)
 
     # now: the output of the network
     render_21_output(ax[1], fig, y_out, y0range=y0range, y1range=y1range, M=M)
